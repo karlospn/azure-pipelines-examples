@@ -1,0 +1,12 @@
+parameters:
+  nugetFeed: ''
+  packagesPath: ''
+
+
+steps:
+    - task: NuGetCommand@2
+      inputs:
+        command: 'push'
+        packagesToPush: '${{ parameters.packagesPath }}'
+        nuGetFeedType: 'internal'
+        publishVstsFeed: '${{ parameters.nugetFeed }}'

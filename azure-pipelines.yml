@@ -1,0 +1,50 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+stages:
+- stage: BuildAppStage
+  pool: 
+    name: 'MyPool'
+  jobs:
+  - job: BuildAppJob
+    steps: 
+    - template: Build/build-dotnet-core-app.yml
+      parameters:
+        BuildConfiguration: Release
+
+
+- stage: Deploy_to_nuget_feed
+  condition: and(always(), eq(variables['Build.SourceBranch'], 'refs/heads/master')) 
+  pool:
+    name: 'MyPool'
+  jobs:       
+  - deployment: PushToNugetFeed
+    environment: ApprovalPool
+    strategy:
+      runOnce:
+        deploy:          
+          steps:
+          - template: Build/push-nuget-feed.yml
+            parameters:
+              nugetFeed: '18178df1-5270-442b-a5b6-d43272af96a5'
+              packagesPath: '$(Build.ArtifactStagingDirectory)/for-nuget/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+      
+      
+- stage: Push_nuget_to_s3_manual
+  condition: and(always(), eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.Reason'], 'Manual')) 
+  pool:
+    name: 'MyPool'
+  jobs: 
+  - job: PushToNugetToS3
+    steps:
+    - template: Build/push-s3-bucket.yml
+      parameters:
+        awsCredentials: $(AwsCredentials)
+        regionName: 'eu-west-1'
+        bucketName: $(BucketName)        
+

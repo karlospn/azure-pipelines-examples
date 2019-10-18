@@ -1,0 +1,35 @@
+parameters:
+  BuildConfiguration: ''
+
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: Restore
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+    feedsToUse: 'select'
+    vstsFeed: 'd248cda4-9937-4527-811e-4791d9dcf813'
+
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration ${{ parameters.BuildConfiguration }} --no-restore'
+
+- task: DotNetCoreCLI@2
+  displayName: Pack
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    configuration: 'release'
+    packDirectory: '$(Build.ArtifactStagingDirectory)/for-nuget/'
+    nobuild: true
+    versioningScheme: 'off'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/for-nuget/'
+    ArtifactName: '$(Build.Repository.Name)-$(Build.SourceBranchName)-$(Build.BuildId)'
+    publishLocation: 'Container'

@@ -1,0 +1,22 @@
+parameters:
+  awsCredentials: ''
+  regionName: ''
+  bucketName: ''
+
+
+steps:
+
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'specific'
+        downloadPath: '$(System.ArtifactsDirectory)'
+
+    - task: S3Upload@1
+      inputs:
+        awsCredentials: '${{ parameters.awsCredentials }}'
+        regionName: '${{ parameters.regionName }}'
+        bucketName: '${{ parameters.bucketName }}'
+        sourceFolder: '$(System.ArtifactsDirectory)/$(Build.Repository.Name)-$(Build.SourceBranchName)-$(Build.BuildId)'
+        targetFolder: 'az-pipelines/'
+        globExpressions: '*.*'
